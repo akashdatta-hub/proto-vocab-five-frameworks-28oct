@@ -1,0 +1,59 @@
+[
+  {
+    "id": "river",
+    "english": "river",
+    "ipa": "/ˈrɪv.ər/",
+    "telugu": {
+      "script": "నది",
+      "transliteration": "nadi"
+    },
+    "definition": "A large natural stream of water flowing in a channel to the sea, a lake, or another river.",
+    "examples": [
+      "The river flows through the village.",
+      "Children play near the river banks.",
+      "We crossed the river by boat."
+    ],
+    "morphology": {
+      "root": "river",
+      "derivedForms": ["rivers", "riverbank", "riverside"]
+    }
+  },
+  {
+    "id": "festival",
+    "english": "festival",
+    "ipa": "/ˈfes.tɪ.vəl/",
+    "telugu": {
+      "script": "పండుగ",
+      "transliteration": "panduga"
+    },
+    "definition": "A day or period of celebration, typically for religious or cultural reasons.",
+    "examples": [
+      "We celebrate Diwali, a festival of lights.",
+      "The harvest festival brings joy to farmers.",
+      "During the festival, families gather together."
+    ],
+    "morphology": {
+      "root": "festival",
+      "derivedForms": ["festivals", "festive", "festivity"]
+    }
+  },
+  {
+    "id": "harvest",
+    "english": "harvest",
+    "ipa": "/ˈhɑːr.vɪst/",
+    "telugu": {
+      "script": "పంట కోత",
+      "transliteration": "panta kōta"
+    },
+    "definition": "The process or period of gathering crops from the fields.",
+    "examples": [
+      "Farmers celebrate after a good harvest.",
+      "The harvest season begins in October.",
+      "We help our grandparents during harvest time."
+    ],
+    "morphology": {
+      "root": "harvest",
+      "derivedForms": ["harvests", "harvested", "harvesting", "harvester"]
+    }
+  }
+]
