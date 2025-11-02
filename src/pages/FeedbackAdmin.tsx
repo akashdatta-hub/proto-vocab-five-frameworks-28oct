@@ -6,6 +6,8 @@ import {
   exportFeedback,
   importFeedback,
   clearFeedback,
+  startFeedbackSync,
+  stopFeedbackSync,
 } from '../lib/storage';
 import { BarChart, StackedBarChart } from '../components/Charts';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -35,10 +37,19 @@ export const FeedbackAdmin: React.FC = () => {
 
   const { log } = useAnalytics();
 
-  // Load feedback on mount
+  // Load feedback on mount and start sync
   useEffect(() => {
-    const items = loadFeedback();
-    setFeedback(items);
+    const loadData = async () => {
+      const items = await loadFeedback();
+      setFeedback(items);
+    };
+
+    loadData();
+    startFeedbackSync();
+
+    return () => {
+      stopFeedbackSync();
+    };
   }, []);
 
   // Extract unique values for dropdowns
@@ -89,8 +100,8 @@ export const FeedbackAdmin: React.FC = () => {
       : null;
 
   // Export handler
-  const handleExport = () => {
-    const jsonData = exportFeedback();
+  const handleExport = async () => {
+    const jsonData = await exportFeedback();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `feedback-export-${timestamp}.json`;
 
@@ -118,16 +129,16 @@ export const FeedbackAdmin: React.FC = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const content = e.target?.result as string;
-      const result = importFeedback(content);
+      const result = await importFeedback(content);
 
       if (result.success) {
         setImportMessage({
           type: 'success',
           text: `Successfully imported ${result.count} feedback items`,
         });
-        const items = loadFeedback();
+        const items = await loadFeedback();
         setFeedback(items);
 
         log({
@@ -151,13 +162,13 @@ export const FeedbackAdmin: React.FC = () => {
   };
 
   // Reset handler
-  const handleReset = () => {
+  const handleReset = async () => {
     if (
       window.confirm(
         'Are you sure you want to clear all feedback? This cannot be undone.'
       )
     ) {
-      clearFeedback();
+      await clearFeedback();
       setFeedback([]);
 
       log({

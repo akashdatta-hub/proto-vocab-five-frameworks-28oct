@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllEvents } from '../hooks/useAnalytics';
 
 export const ComparePage: React.FC = () => {
-  const events = getAllEvents();
+  const [events, setEvents] = useState<Awaited<ReturnType<typeof getAllEvents>>>([]);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      const data = await getAllEvents();
+      setEvents(data);
+    };
+    loadEvents();
+  }, []);
 
   const frameworks = ['blooms', 'cefr', 'marzano', 'nation', 'lexical'];
 

@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllEvents, clearAllEvents } from '../hooks/useAnalytics';
 
 export const DebugPage: React.FC = () => {
-  const [events, setEvents] = useState(getAllEvents());
+  const [events, setEvents] = useState<Awaited<ReturnType<typeof getAllEvents>>>([]);
   const [filter, setFilter] = useState('');
 
-  const handleClear = () => {
+  useEffect(() => {
+    const loadEvents = async () => {
+      const data = await getAllEvents();
+      setEvents(data);
+    };
+    loadEvents();
+  }, []);
+
+  const handleClear = async () => {
     if (confirm('Are you sure you want to clear all analytics data?')) {
-      clearAllEvents();
+      await clearAllEvents();
       setEvents([]);
     }
   };
