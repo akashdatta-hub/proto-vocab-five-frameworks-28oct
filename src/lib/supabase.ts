@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Hardcoded fallback values
-const FALLBACK_URL = 'https://axjvvhpobolvtohtgtytm.supabase.co';
+const FALLBACK_URL = 'https://axjvvhpobolvohtgtytm.supabase.co';
 const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4anZ2aHBvYm9sdm9odGd0eXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDE5MzEsImV4cCI6MjA3NzU3NzkzMX0.O5MIarplhSwNfBrFeJ3fqzSoy9dbq5w8UOAs5EQBI5A';
 
 // Use environment variables if available, otherwise use fallbacks
