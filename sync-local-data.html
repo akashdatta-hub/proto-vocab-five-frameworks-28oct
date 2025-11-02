@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sync Local Data to Supabase</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 { margin-top: 0; color: #333; }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #9ca3af; cursor: not-allowed; }
+    .success { color: #10b981; font-weight: bold; }
+    .error { color: #ef4444; font-weight: bold; }
+    pre {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    .status { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔄 Sync Local Data to Supabase</h1>
+    <p>This tool will push your localStorage analytics and feedback data to Supabase.</p>
+
+    <div id="info">
+      <p><strong>Local Data Found:</strong></p>
+      <div id="localDataInfo"></div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button id="syncBtn" onclick="syncData()">Sync All Data to Supabase</button>
+      <button onclick="viewData()" style="background: #6b7280;">View Local Data</button>
+      <button onclick="clearLocal()" style="background: #ef4444;">Clear Local Data</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="output"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+
+    const SUPABASE_URL = 'https://axjvvhpobolvtohtgtytm.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4anZ2aHBvYm9sdm9odGd0eXRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDE5MzEsImV4cCI6MjA3NzU3NzkzMX0.O5MIarplhSwNfBrFeJ3fqzSoy9dbq5w8UOAs5EQBI5A';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Device fingerprint generation
+    function generateDeviceFingerprint() {
+      const components = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width,
+        screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset(),
+      ];
+      const fingerprint = components.join('|');
+      let hash = 0;
+      for (let i = 0; i < fingerprint.length; i++) {
+        const char = fingerprint.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return 'fp_' + Math.abs(hash).toString(36);
+    }
+
+    function getDeviceType() {
+      const width = window.innerWidth;
+      const ua = navigator.userAgent.toLowerCase();
+      if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return 'tablet';
+      if (/mobile|iphone|ipod|blackberry|opera mini|iemobile|windows phone/i.test(ua)) return 'mobile';
+      if (width < 768) return 'mobile';
+      else if (width >= 768 && width < 1024) return 'tablet';
+      return 'desktop';
+    }
+
+    function getBrowserInfo() {
+      const ua = navigator.userAgent;
+      let browser = 'Unknown', version = 'Unknown';
+      if (ua.indexOf('Firefox') > -1) {
+        browser = 'Firefox';
+        version = ua.match(/Firefox\/([0-9.]+)/)?.[1] || 'Unknown';
+      } else if (ua.indexOf('Chrome') > -1 && ua.indexOf('Edg') === -1) {
+        browser = 'Chrome';
+        version = ua.match(/Chrome\/([0-9.]+)/)?.[1] || 'Unknown';
+      } else if (ua.indexOf('Safari') > -1 && ua.indexOf('Chrome') === -1) {
+        browser = 'Safari';
+        version = ua.match(/Version\/([0-9.]+)/)?.[1] || 'Unknown';
+      } else if (ua.indexOf('Edg') > -1) {
+        browser = 'Edge';
+        version = ua.match(/Edg\/([0-9.]+)/)?.[1] || 'Unknown';
+      }
+      return { browser, version };
+    }
+
+    function getOS() {
+      const ua = navigator.userAgent;
+      if (ua.indexOf('Win') > -1) return 'Windows';
+      if (ua.indexOf('Mac') > -1) return 'macOS';
+      if (ua.indexOf('Linux') > -1) return 'Linux';
+      if (ua.indexOf('Android') > -1) return 'Android';
+      if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) return 'iOS';
+      return 'Unknown';
+    }
+
+    function getDeviceInfo() {
+      const { browser, version } = getBrowserInfo();
+      return {
+        deviceType: getDeviceType(),
+        browser,
+        browserVersion: version,
+        os: getOS(),
+        screenSize: `${screen.width}x${screen.height}`,
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+        deviceFingerprint: generateDeviceFingerprint(),
+      };
+    }
+
+    // Load local data
+    function loadLocalAnalytics() {
+      try {
+        const data = localStorage.getItem('pvf_analytics_v1');
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function loadLocalFeedback() {
+      try {
+        const data = localStorage.getItem('pvf_feedback_v1');
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    // Display local data info
+    function displayLocalInfo() {
+      const analytics = loadLocalAnalytics();
+      const feedback = loadLocalFeedback();
+
+      document.getElementById('localDataInfo').innerHTML = `
+        <ul>
+          <li><strong>${analytics.length}</strong> analytics events</li>
+          <li><strong>${feedback.length}</strong> feedback items</li>
+        </ul>
+      `;
+    }
+
+    // Sync data to Supabase
+    window.syncData = async function() {
+      const statusEl = document.getElementById('status');
+      const outputEl = document.getElementById('output');
+      const btn = document.getElementById('syncBtn');
+
+      btn.disabled = true;
+      statusEl.innerHTML = '<p>🔄 Syncing data...</p>';
+      outputEl.innerHTML = '';
+
+      const analytics = loadLocalAnalytics();
+      const feedback = loadLocalFeedback();
+      const deviceInfo = getDeviceInfo();
+
+      let results = [];
+
+      // Sync analytics
+      if (analytics.length > 0) {
+        const sessionId = sessionStorage.getItem('pvf_session_id') || crypto.randomUUID();
+
+        const analyticsRows = analytics.map(event => ({
+          session_id: sessionId,
+          user_id: event.userId || 'demo-user',
+          device_fingerprint: deviceInfo.deviceFingerprint,
+          framework: event.framework,
+          word_id: event.wordId,
+          event: event.event,
+          meta: {
+            ...event.meta,
+            device: deviceInfo,
+            timestamp: event.ts,
+          }
+        }));
+
+        const { data, error } = await supabase
+          .from('analytics_events')
+          .insert(analyticsRows);
+
+        if (error) {
+          results.push(`<p class="error">❌ Analytics sync failed: ${error.message}</p>`);
+        } else {
+          results.push(`<p class="success">✅ Synced ${analytics.length} analytics events</p>`);
+        }
+      }
+
+      // Sync feedback
+      if (feedback.length > 0) {
+        const feedbackRows = feedback.map(item => ({
+          session_id: item.sessionId,
+          user_id: item.userId,
+          framework: item.framework,
+          word_id: item.wordId,
+          step_id: item.stepId,
+          step_label: item.stepLabel,
+          thumb: item.thumb,
+          include: item.include,
+          difficulty: item.difficulty,
+          comment: item.comment,
+          meta: {
+            ...item.meta,
+            device: deviceInfo,
+            timestamp: item.ts,
+          }
+        }));
+
+        const { data, error } = await supabase
+          .from('feedback')
+          .insert(feedbackRows);
+
+        if (error) {
+          results.push(`<p class="error">❌ Feedback sync failed: ${error.message}</p>`);
+        } else {
+          results.push(`<p class="success">✅ Synced ${feedback.length} feedback items</p>`);
+        }
+      }
+
+      if (analytics.length === 0 && feedback.length === 0) {
+        results.push('<p>ℹ️ No local data to sync</p>');
+      }
+
+      statusEl.innerHTML = results.join('');
+      btn.disabled = false;
+    };
+
+    // View local data
+    window.viewData = function() {
+      const analytics = loadLocalAnalytics();
+      const feedback = loadLocalFeedback();
+
+      document.getElementById('output').innerHTML = `
+        <h3>Analytics Events (${analytics.length})</h3>
+        <pre>${JSON.stringify(analytics, null, 2)}</pre>
+        <h3>Feedback Items (${feedback.length})</h3>
+        <pre>${JSON.stringify(feedback, null, 2)}</pre>
+      `;
+    };
+
+    // Clear local data
+    window.clearLocal = function() {
+      if (confirm('Are you sure you want to clear all local data?')) {
+        localStorage.removeItem('pvf_analytics_v1');
+        localStorage.removeItem('pvf_feedback_v1');
+        localStorage.removeItem('pvf_pending_sync_v1');
+        localStorage.removeItem('pvf_pending_feedback_v1');
+        document.getElementById('status').innerHTML = '<p class="success">✅ Local data cleared</p>';
+        displayLocalInfo();
+      }
+    };
+
+    // Initialize
+    displayLocalInfo();
+  </script>
+</body>
+</html>
