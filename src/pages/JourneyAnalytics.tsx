@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { BarChart, StackedBarChart } from '../components/Charts';
 
 interface JourneyStats {
   totalEvents: number;
@@ -349,10 +348,26 @@ export const JourneyAnalytics: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Event Distribution</h2>
           {eventTypes.length > 0 ? (
-            <BarChart
-              data={eventTypes.map(e => ({ label: e.eventType, value: e.occurrences }))}
-              title="Events by Type"
-            />
+            <div className="space-y-4">
+              {eventTypes.map(e => {
+                const maxOccurrences = Math.max(...eventTypes.map(et => et.occurrences));
+                const widthPercent = (e.occurrences / maxOccurrences) * 100;
+                return (
+                  <div key={e.eventType}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700">{e.eventType}</span>
+                      <span className="text-sm text-gray-600">{e.occurrences} events ({e.percentage.toFixed(1)}%)</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-6">
+                      <div
+                        className="h-6 rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${widthPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : (
             <p className="text-gray-500">No event data available</p>
           )}
