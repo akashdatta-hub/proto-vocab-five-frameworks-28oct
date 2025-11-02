@@ -1,8 +1,30 @@
 import { useCallback } from 'react';
 import type { AnalyticsEvent } from '../types';
 
-// In-memory analytics store (ephemeral, resets on refresh)
-const events: AnalyticsEvent[] = [];
+const ANALYTICS_KEY = 'pvf_analytics_v1';
+
+// Load events from localStorage
+const loadEvents = (): AnalyticsEvent[] => {
+  try {
+    const data = localStorage.getItem(ANALYTICS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Failed to load analytics:', error);
+    return [];
+  }
+};
+
+// Save events to localStorage
+const saveEvents = (events: AnalyticsEvent[]): void => {
+  try {
+    localStorage.setItem(ANALYTICS_KEY, JSON.stringify(events));
+  } catch (error) {
+    console.error('Failed to save analytics:', error);
+  }
+};
+
+// Initialize events from localStorage
+let events: AnalyticsEvent[] = loadEvents();
 
 export const useAnalytics = () => {
   const log = useCallback((event: Omit<AnalyticsEvent, 'ts' | 'userId'>) => {
@@ -13,6 +35,7 @@ export const useAnalytics = () => {
     };
 
     events.push(analyticsEvent);
+    saveEvents(events);
 
     // Log to console in development
     if (import.meta.env && import.meta.env.DEV) {
@@ -20,18 +43,25 @@ export const useAnalytics = () => {
     }
   }, []);
 
-  const getEvents = useCallback(() => events, []);
+  const getEvents = useCallback(() => {
+    // Reload from localStorage to get latest data
+    events = loadEvents();
+    return events;
+  }, []);
 
   const getEventsByFramework = useCallback((framework: string) => {
+    events = loadEvents();
     return events.filter((e) => e.framework === framework);
   }, []);
 
   const getEventsByWord = useCallback((wordId: string) => {
+    events = loadEvents();
     return events.filter((e) => e.wordId === wordId);
   }, []);
 
   const clearEvents = useCallback(() => {
-    events.length = 0;
+    events = [];
+    saveEvents(events);
   }, []);
 
   return {
@@ -44,7 +74,11 @@ export const useAnalytics = () => {
 };
 
 // Export for direct access in pages
-export const getAllEvents = () => events;
+export const getAllEvents = () => {
+  return loadEvents();
+};
+
 export const clearAllEvents = () => {
-  events.length = 0;
+  const events: AnalyticsEvent[] = [];
+  saveEvents(events);
 };
