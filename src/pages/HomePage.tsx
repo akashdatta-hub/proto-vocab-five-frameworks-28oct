@@ -114,7 +114,10 @@ export const HomePage: React.FC = () => {
         </section>
 
         <section className="text-center">
-          <div className="inline-flex gap-4">
+          <div className="inline-flex flex-wrap gap-4 justify-center">
+            <Link to="/journey-analytics" className="btn-primary">
+              Journey Analytics
+            </Link>
             <Link to="/compare" className="btn-secondary">
               View Comparison
             </Link>

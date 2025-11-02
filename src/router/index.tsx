@@ -3,6 +3,7 @@ import { HomePage } from '../pages/HomePage';
 import { ComparePage } from '../pages/ComparePage';
 import { DebugPage } from '../pages/DebugPage';
 import { FeedbackAdmin } from '../pages/FeedbackAdmin';
+import { JourneyAnalytics } from '../pages/JourneyAnalytics';
 import { BloomsJourney } from '../journeys/blooms';
 import { CEFRJourney } from '../journeys/cefr';
 import { MarzanoJourney } from '../journeys/marzano';
@@ -45,5 +46,9 @@ export const router = createBrowserRouter([
   {
     path: '/feedback',
     element: <FeedbackAdmin />,
+  },
+  {
+    path: '/journey-analytics',
+    element: <JourneyAnalytics />,
   },
 ]);
